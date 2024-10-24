@@ -42,6 +42,13 @@ end
 
 local function update_offset(value)
 	G.kb_select_offset = value
+	if G.kb_selected_area and G.kb_selected_area.cards then
+		for i = G.kb_select_offset, G.kb_select_offset + 9 do
+			local card = G.kb_selected_area.cards[i + 1]
+			if not card then break end
+			card:juice_up(.1, .2)
+		end
+	end
 end
 
 local function add_offset(amount)
@@ -78,10 +85,6 @@ local function set_selected(id)
 end
 
 local function toggle_selected(index)
-	if not last_state or G.STATE ~= last_state then
-		last_state = G.STATE
-		reset_vars()
-	end
 	if G.kb_selected_area and G.kb_selected_area.cards and #G.kb_selected_area.cards == 0 then
 		reset_vars()
 	end
@@ -276,6 +279,7 @@ local function context_use()
 	if G.kb_selected_area == G.pack_cards then
 		local card = G.kb_selected_area.highlighted and G.kb_selected_area.highlighted[1]
 		if not card then return end
+		if card.ability.consumeable and not card:can_use_consumeable() then return end
 		
 		local button = {config = {ref_table = card}}
 		G.FUNCS.can_select_card(button)
@@ -310,7 +314,7 @@ end
 local function sell()
 	if G.kb_selected_area and G.kb_selected_area.cards then
 		for i, card in ipairs(G.kb_selected_area.cards) do
-			if card.area and card.area.config.type == "joker" then
+			if card.area and card.area.config.type == "joker" and card.highlighted then
 				local fakebutton = {config = {ref_table = card}}
 				G.FUNCS.can_sell_card(fakebutton)
 				if fakebutton.config.button then
@@ -358,7 +362,31 @@ local function cycle_selected(amount)
 	end
 end
 
-local toggle = false
+local function sort_suit()
+	if not G.hand then return end
+	G.FUNCS.sort_hand_suit()
+end
+
+local function sort_rank()
+	if not G.hand then return end
+	G.FUNCS.sort_hand_value()
+end
+
+local function peek_deck()
+	if not G.deck then return end
+	if not G.deck_preview and not G.OVERLAY_MENU then
+		G.deck_preview = UIBox{
+            definition = G.UIDEF.deck_preview(),
+            config = {align='tm', offset = {x=0,y=-0.8},major = G.hand, bond = 'Weak'}
+        }
+	else
+		if G.deck_preview then
+			G.deck_preview:remove()
+		end
+		G.deck_preview = nil
+	end
+end
+	
 
 -- Monkey-patching
 
@@ -370,6 +398,10 @@ function Card:update(dt)
 	update_card(self, dt)
 	if not self.area then
 		self.__kb_index = nil
+	end
+	if not last_state or G.STATE ~= last_state then
+		reset_vars()
+		last_state = G.STATE
 	end
 end
 
@@ -445,7 +477,10 @@ local keybinds = {
 		reset_vars()
 	end,
 	["Reroll"] = reroll,
-	["Sell"] = sell
+	["Sell"] = sell,
+	["SortSuit"] = sort_suit,
+	["SortRank"] = sort_rank,
+	["PeekDeck"] = peek_deck,
 }
 
 for i = 1, 10 do
@@ -455,11 +490,15 @@ for i = 1, 10 do
 end
 
 for key, action in pairs(keybinds) do
-	SMODS.Keybind {
-		key = "vilatro_binding_" .. key,
-		key_pressed = mod.config[key],
-		action = action
-	}
+	if mod.config[key] ~= false then
+		SMODS.Keybind {
+			key = "vilatro_binding_" .. key,
+			key_pressed = mod.config[key],
+			action = function()
+				if not G.OVERLAY_MENU then action() end
+			end
+		}
+	end
 end
 
 
@@ -560,7 +599,7 @@ function G.FUNCS.bind_key(e)
 		
 		local bound_key = key
 		if bound_key == "escape" then
-			bound_key = nil
+			bound_key = false
 		end
 		
 		e.config.ref_table[e.config.ref_value] = bound_key
@@ -747,6 +786,12 @@ mod.config_tab = function()
 					label = "vi_keybind_buy_and_use",
 					info = "vi_keybind_buy_and_use_desc"
 				},
+				create_keybind_button {
+					ref_table = mod.config,
+					ref_value = "PeekDeck",
+					label = "vi_keybind_peek_deck",
+					info = "vi_keybind_peek_deck_desc"
+				},
 			}},
 			{n=G.UIT.R, config={align = "cm", colour = G.C.CLEAR}, nodes={
 				create_keybind_button {
@@ -760,6 +805,18 @@ mod.config_tab = function()
 					ref_value = "Sell",
 					label = "vi_keybind_sell",
 					info = "vi_keybind_sell_desc"
+				},
+				create_keybind_button {
+					ref_table = mod.config,
+					ref_value = "SortSuit",
+					label = "vi_keybind_sort_suit",
+					info = "vi_keybind_sort_suit_desc"
+				},
+				create_keybind_button {
+					ref_table = mod.config,
+					ref_value = "SortRank",
+					label = "vi_keybind_sort_rank",
+					info = "vi_keybind_sort_rank_desc"
 				},
 			}},
 		}

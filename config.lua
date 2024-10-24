@@ -26,4 +26,7 @@ return {
 	["Select7"] = "7", --
 	["Select8"] = "8", --
 	["Select9"] = "9", --
+	["SortSuit"] = "x", --
+	["SortRank"] = "z", --
+	["PeekDeck"] = "o", --
 }

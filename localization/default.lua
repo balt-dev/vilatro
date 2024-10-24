@@ -35,6 +35,12 @@ return {
 			vi_keybind_reroll_desc = "Rerolls shop/boss blind",
 			vi_keybind_sell = "Sell",
 			vi_keybind_sell_desc = "Sells selected card",
+			vi_keybind_sort_suit = "Sort Suit",
+			vi_keybind_sort_suit_desc = "Sorts your hand by suit",
+			vi_keybind_sort_rank = "Sort Rank",
+			vi_keybind_sort_rank_desc = "Sorts your hand by rank",
+			vi_keybind_peek_deck = "Peek Deck",
+			vi_keybind_peek_deck_desc = "Previews your deck"
 		}
 	}
 }
