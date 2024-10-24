@@ -6,7 +6,7 @@ Made out of necessity. Expect to have to ask for updates.
 
 ## Usage
 
-You can download a .zip of the mod using the "Download source code" button on GitHub's UI, or by clicking [here](https://github.com/balt-dev/vilatro/archive/refs/heads/trunk.zip).
+You can download a .zip of the mod using the "Download ZIP" button under the "Code" dropdown in GitHub's UI, or by clicking [here](https://github.com/balt-dev/vilatro/archive/refs/heads/trunk.zip).
 
 ## Gallery
 
