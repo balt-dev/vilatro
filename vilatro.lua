@@ -3,8 +3,8 @@
 --- MOD_ID: VI
 --- PREFIX: vi
 --- MOD_AUTHOR: [baltdev]
---- MOD_DESCRIPTION: Proper keyboard bindings for Balatro. Controller support not guaranteed.
---- VERSION: 0.1.0
+--- MOD_DESCRIPTION: Proper keyboard bindings for Balatro. Might break controller support.
+--- VERSION: 0.2.1
 ----------------------
 
 local mod = SMODS.current_mod
@@ -207,7 +207,10 @@ end
 local function context_use()
 	if G.STATE == G.STATES.ROUND_EVAL then
 		local fakebutton = {config = {}}
-		G.FUNCS.cash_out(fakebutton)
+		if G.__vi_safe_to_cash_out then
+			G.FUNCS.cash_out(fakebutton)
+			G.__vi_safe_to_cash_out = false
+		end
 		return
 	end
 	if G.STATE == G.STATES.BLIND_SELECT then
@@ -402,6 +405,9 @@ function Card:update(dt)
 	if not last_state or G.STATE ~= last_state then
 		reset_vars()
 		last_state = G.STATE
+		if G.STATE == G.STATES.ROUND_EVAL then
+			G.__vi_safe_to_cash_out = false
+		end
 	end
 end
 

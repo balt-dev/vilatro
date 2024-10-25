@@ -17,3 +17,13 @@ end
 '''
 match_indent = true
 overwrite = false
+
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+pattern = "play_sound('coin6', config.pitch or 1)"
+position = "before"
+payload = """
+G.__vi_safe_to_cash_out = true
+"""
+match_indent = true
