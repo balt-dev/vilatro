@@ -4,7 +4,7 @@
 --- PREFIX: vi
 --- MOD_AUTHOR: [baltdev]
 --- MOD_DESCRIPTION: Proper keyboard bindings for Balatro. Might break controller support.
---- VERSION: 0.2.1
+--- VERSION: 0.2.2
 ----------------------
 
 local mod = SMODS.current_mod
@@ -46,7 +46,7 @@ local function update_offset(value)
 		for i = G.kb_select_offset, G.kb_select_offset + 9 do
 			local card = G.kb_selected_area.cards[i + 1]
 			if not card then break end
-			card:juice_up(.1, .2)
+			-- card:juice_up(.1, .2)
 		end
 	end
 end
@@ -397,7 +397,38 @@ local update_card = Card.update
 local update_area = CardArea.update
 local draw_card = Card.draw
 
+local SELECT_SCALE_MUL = 1.07
+
 function Card:update(dt)
+	if not self.T.__vi_custom then
+		local actual_t = self.T
+		local actual_scale = actual_t.scale
+		local t = {}		
+		setmetatable(t, {
+			__index = function(t, k)
+				if k == "scale" then
+					if self.area == G.kb_selected_area 
+						and self.__kb_index
+						and self.__kb_index > G.kb_select_offset
+						and self.__kb_index <= G.kb_select_offset + 10
+					then return actual_scale
+					else return actual_scale / SELECT_SCALE_MUL 
+					end
+				end
+				if k == "__vi_custom" then return true end				
+				return actual_t[k]
+			end,
+			__setindex = function(t, k, v)
+				if k == "scale" then
+					actual_scale = v
+					return
+				end
+				actual_t[k] = v
+			end					
+		})
+		self.T = t
+		print("Replaced transform")
+	end
 	update_card(self, dt)
 	if not self.area then
 		self.__kb_index = nil
@@ -409,6 +440,14 @@ function Card:update(dt)
 			G.__vi_safe_to_cash_out = false
 		end
 	end
+	
+	
+	if self.area == G.kb_selected_area 
+		and self.__kb_index
+		and self.__kb_index > G.kb_select_offset
+		and self.__kb_index <= G.kb_select_offset + 10
+	then
+	end
 end
 
 function CardArea:update(dt)
@@ -417,26 +456,6 @@ function CardArea:update(dt)
 		for i, card in ipairs(self.cards) do
 			card.__kb_index = i
 		end
-	end
-end
-
-function Card:draw()
-	draw_card(self)
-	
-	if self.area == G.kb_selected_area 
-		and self.__kb_index
-		and self.__kb_index > G.kb_select_offset
-		and self.__kb_index <= G.kb_select_offset + 10
-	then
-		local transform = self.VT or self.T
-		love.graphics.push()
-		love.graphics.scale(G.TILESCALE, G.TILESCALE)
-		love.graphics.translate(transform.x*G.TILESIZE+transform.w*G.TILESIZE*0.5, transform.y*G.TILESIZE+transform.h*G.TILESIZE*0.5)
-		love.graphics.rotate(transform.r)
-		love.graphics.translate(-transform.w*G.TILESIZE*0.5, -transform.h*G.TILESIZE*0.5)
-		love.graphics.setColor(G.C.UI.OUTLINE_LIGHT_TRANS)
-		love.graphics.arc('fill', transform.w*G.TILESIZE*0.5, transform.h*G.TILESIZE*-0.1, 0.2*G.TILESIZE, -3 * math.pi / 4, -math.pi / 4, 1)
-		love.graphics.pop() 
 	end
 end
 
